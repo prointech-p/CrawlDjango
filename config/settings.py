@@ -126,7 +126,7 @@ USE_TZ = True
 
 
 # === STATIC & MEDIA ===
-STATIC_URL = '/static_dj/'
+STATIC_URL = '/static/'
 # STATICFILES_DIRS = [BASE_DIR / 'static']  # для разработки
 
 STATICFILES_DIRS = [
