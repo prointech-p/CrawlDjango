@@ -39,11 +39,13 @@ DJANGO_APPS  = [
 THIRD_PARTY_APPS = [
     # 'debug_toolbar', # Подключить при необходимости
     # 'corsheaders', 
-    # 'rest_framework', 
+    'rest_framework', 
+    'rest_framework.authtoken',
 ]
 
 LOCAL_APPS = [
     'apps.core',
+    'apps.crawler',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -134,3 +136,13 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'    # для collectstatic
 
 MEDIA_URL = '/media/'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
