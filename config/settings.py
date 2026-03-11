@@ -23,7 +23,7 @@ SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 
-ALLOWED_HOSTS = ['ya.youtraffic.ru', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['144.31.126.186', 'ya.youtraffic.ru', 'localhost', '127.0.0.1']
 
 
 # === INSTALLED APPS ===
