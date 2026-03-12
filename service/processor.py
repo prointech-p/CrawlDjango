@@ -292,13 +292,22 @@ def crawl_search_results(search_results: List[SearchResult]) -> List[int]:
                         logger.warning(f"  Не удалось извлечь название организации: {e}")
                     
                     crawled.save(update_fields=['raw_html', 'organization_name'])
+
+                    # При создании телефонов нужно будет передавать topic
+                    topic = search_result.history.topic
+                    print('=============================')
+                    print(search_result)
+                    print(search_result.history)
+                    print(search_result.history.topic)
                     
                     # Сохраняем телефоны
                     phones_created = 0
                     for phone in extracted.get("phones", []):
-                        if phone:  # Проверяем, что телефон не пустой
+                         # Проверяем, что телефон не пустой и не дубль
+                        if phone and not CrawledPhone.objects.filter(topic=topic, phone=phone).exists(): 
                             CrawledPhone.objects.create(
                                 crawled_data=crawled,
+                                topic=topic,
                                 phone=phone,
                                 phone_raw=phone
                             )
@@ -307,9 +316,10 @@ def crawl_search_results(search_results: List[SearchResult]) -> List[int]:
                     # Сохраняем email'ы
                     emails_created = 0
                     for email in extracted.get("emails", []):
-                        if email:
+                        if email and not CrawledEmail.objects.filter(topic=topic, email=email).exists():
                             CrawledEmail.objects.create(
                                 crawled_data=crawled,
+                                topic=topic,
                                 email=email
                             )
                             emails_created += 1

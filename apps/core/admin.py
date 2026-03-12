@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.http import HttpResponseRedirect
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html, format_html_join, escape
+from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.db.models import Count, Q
 from .models import (
@@ -80,7 +81,10 @@ class CrawledDataInline(admin.StackedInline):
     
     def view_details_link(self, obj):
         if obj.pk:
-            url = reverse('admin:app_crawleddata_change', args=[obj.pk])
+            # url = reverse('admin:app_crawleddata_change', args=[obj.pk])
+            app_label = obj.crawled_data._meta.app_label
+            model_name = obj.crawled_data._meta.model_name
+            url = reverse(f'admin:{app_label}_{model_name}_change', args=[obj.crawled_data_id])
             return format_html('<a class="button" href="{}">Подробнее</a>', url)
         return "-"
     view_details_link.short_description = 'Действия'
@@ -318,23 +322,35 @@ class SearchResultAdmin(admin.ModelAdmin):
     status_icons.short_description = 'Статус'
     
     def crawled_status(self, obj):
-        if hasattr(obj, 'crawled_data'):
-            crawled = obj.crawled_data
-            status = []
-            if crawled.http_status:
-                status.append(f'HTTP: {crawled.http_status}')
-            if crawled.organization_name:
-                status.append(f'Орг: {crawled.organization_name}')
-            if crawled.error_message:
-                status.append(f'Ошибка: {crawled.error_message[:50]}')
-            
-            return format_html('<br>'.join(status)) if status else 'Нет данных'
-        return 'Не краулилось'
+        if not hasattr(obj, 'crawled_data'):
+            return "Не краулилось"
+        
+        crawled = obj.crawled_data
+        status = []
+
+        if crawled.http_status:
+            status.append(f'HTTP: {crawled.http_status}')
+        if crawled.organization_name:
+            status.append(f'Орг: {crawled.organization_name}')
+        if crawled.error_message:
+            status.append(f'Ошибка: {crawled.error_message[:50]}')
+        
+        if not status:
+            return "Нет данных"
+    
+        return format_html_join(
+            mark_safe("<br>"),
+            "{}", 
+            ((escape(item),) for item in status)
+        )
     crawled_status.short_description = 'Статус краулинга'
     
     def view_crawled_link(self, obj):
         if hasattr(obj, 'crawled_data'):
-            url = reverse('admin:app_crawleddata_change', args=[obj.crawled_data.id])
+            # url = reverse('admin:app_crawleddata_change', args=[obj.crawled_data.id])
+            app_label = obj.crawled_data._meta.app_label
+            model_name = obj.crawled_data._meta.model_name
+            url = reverse(f'admin:{app_label}_{model_name}_change', args=[obj.crawled_data_id])
             return format_html('<a class="button" href="{}">Просмотреть данные краулинга</a>', url)
         return format_html('<span style="color: gray;">Нет данных краулинга</span>')
     view_crawled_link.short_description = 'Данные краулинга'
@@ -488,16 +504,28 @@ class CrawledDataAdmin(admin.ModelAdmin):
         
         return format_html_join('<br>', '{}', ((icon,) for icon in icons))
     data_summary.short_description = 'Найденные данные'
-    
+
     def phones_count(self, obj):
         count = obj.phones.count()
-        url = reverse('admin:app_crawledphone_changelist') + f'?crawled_data__id__exact={obj.id}'
+
+        model = obj.phones.model
+        app_label = model._meta.app_label
+        model_name = model._meta.model_name
+
+        url = reverse(f'admin:{app_label}_{model_name}_changelist')
+        url += f'?crawled_data__id__exact={obj.id}'
         return format_html('<a href="{}">{}</a>', url, count)
     phones_count.short_description = 'Телефоны'
-    
+
     def emails_count(self, obj):
         count = obj.emails.count()
-        url = reverse('admin:app_crawledemail_changelist') + f'?crawled_data__id__exact={obj.id}'
+
+        model = obj.emails.model
+        app_label = model._meta.app_label
+        model_name = model._meta.model_name
+
+        url = reverse(f'admin:{app_label}_{model_name}_changelist')
+        url += f'?crawled_data__id__exact={obj.id}'
         return format_html('<a href="{}">{}</a>', url, count)
     emails_count.short_description = 'Email'
     
@@ -532,14 +560,16 @@ class CrawledPhoneAdmin(admin.ModelAdmin):
     list_display = [
         'id', 
         'phone', 
+        'topic',
+        'site_url', 
         'crawled_link', 
         'phone_raw_short', 
         'created_at_short'
     ]
     list_display_links = ['id', 'phone']
-    list_filter = ['created_at']
-    search_fields = ['phone', 'phone_raw']
-    readonly_fields = ['created_at']
+    list_filter = ['topic', 'created_at']
+    search_fields = ['topic', 'phone', 'phone_raw']
+    readonly_fields = ['topic', 'created_at']
     
     fieldsets = (
         (None, {
@@ -550,6 +580,33 @@ class CrawledPhoneAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def site_url(self, obj):
+        """
+        Отображает URL сайта в табличном просмотре (простой текст)
+        """
+        if obj.crawled_data and obj.crawled_data.url:
+            url = obj.crawled_data.url
+            # Обрезаем длинный URL для компактности
+            max_length = 50
+            if len(url) > max_length:
+                return url[:max_length] + '...'
+            return url
+        return '-'
+    site_url.short_description = 'URL сайта'
+    site_url.admin_order_field = 'crawled_data__url'  # возможность сортировки
+    
+    def site_url_display(self, obj):
+        """
+        Отображает URL в детальном просмотре (полный URL)
+        """
+        if obj.crawled_data and obj.crawled_data.url:
+            return format_html(
+                '<div style="word-break: break-all; padding: 5px 0;">{}</div>',
+                obj.crawled_data.url
+            )
+        return '-'
+    site_url_display.short_description = 'URL сайта'
     
     def crawled_link(self, obj):
         app_label = obj.crawled_data._meta.app_label

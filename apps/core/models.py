@@ -306,11 +306,10 @@ class CrawledData(models.Model):
     def __str__(self):
         return f"Данные #{self.id} ({self.url[:50]}...)"
 
-
 class CrawledPhone(models.Model):
     """
     Модель найденных телефонных номеров.
-    Каждая запись - отдельный телефон, связанный с crawled_data.
+    Каждая запись - отдельный телефон, связанный с crawled_data и темой поиска.
     """
     crawled_data = models.ForeignKey(
         CrawledData,
@@ -318,6 +317,15 @@ class CrawledPhone(models.Model):
         related_name='phones',
         verbose_name="Запись краулинга",
         help_text="ID записи краулинга"
+    )
+    topic = models.ForeignKey(
+        SearchTopic,
+        on_delete=models.CASCADE,
+        related_name='crawled_phones',
+        verbose_name="Тема поиска",
+        help_text="Тема поиска, в рамках которой найден телефон",
+        null=True,  # временно разрешаем NULL для существующих данных
+        blank=True
     )
     phone = models.CharField(
         max_length=20,
@@ -350,6 +358,13 @@ class CrawledPhone(models.Model):
         ordering = ['crawled_data']
         indexes = [
             models.Index(fields=['phone']),
+            models.Index(fields=['topic', 'phone']),  # индекс для быстрого поиска дублей
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['topic', 'phone'],
+                name='unique_phone_per_topic'
+            )
         ]
     
     def __str__(self):
@@ -366,6 +381,15 @@ class CrawledEmail(models.Model):
         related_name='emails',
         verbose_name="Запись краулинга",
         help_text="ID записи краулинга"
+    )
+    topic = models.ForeignKey(
+        SearchTopic,
+        on_delete=models.CASCADE,
+        related_name='crawled_emails',
+        verbose_name="Тема поиска",
+        help_text="Тема поиска, в рамках которой найден email",
+        null=True,  # временно разрешаем NULL для существующих данных
+        blank=True
     )
     email = models.EmailField(
         max_length=255,
@@ -391,6 +415,13 @@ class CrawledEmail(models.Model):
         ordering = ['crawled_data']
         indexes = [
             models.Index(fields=['email']),
+            models.Index(fields=['topic', 'email']),  # индекс для быстрого поиска дублей
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['topic', 'email'],
+                name='unique_email_per_topic'
+            )
         ]
     
     def __str__(self):
