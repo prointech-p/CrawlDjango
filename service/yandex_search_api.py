@@ -37,16 +37,36 @@ def fetch_search_page(query: str, page: int = 0) -> List[Dict[str, str]]:
     
     # Формируем тело запроса согласно документации API
     # offset = page * 10 - для пагинации (на странице 10 результатов)
+    query_text = query
+
     payload = {
         "query": {
-            "searchType": "SEARCH_TYPE_RU",  # Поиск по русскоязычным сайтам
-            "queryText": query               # Текст поискового запроса
+            "searchType": "SEARCH_TYPE_RU",         # Поиск по русскоязычным сайтам
+            "queryText": query_text,                # сюда можно добавить исключения
+            "page": str(page),                      # Смещение для пагинации
+            "familyMode": "FAMILY_MODE_MODERATE",   # по желанию
+            "fixTypoMode": "FIX_TYPO_MODE_ON"
         },
-        "folderId": YANDEX_FOLDER_ID,        # ID каталога в Yandex Cloud
-        "page": {
-            "offset": page * 10               # Смещение для пагинации
-        }
+        "groupSpec": {
+            "groupMode": "GROUP_MODE_FLAT",
+            "groupsOnPage": "50",               # до 100
+            "docsInGroup": "1"
+        },
+        "maxPassages": "3",                     # более длинные сниппеты
+        "folderId": YANDEX_FOLDER_ID,           # ID каталога в Yandex Cloud
+        "responseFormat": "FORMAT_XML"          # явно, хотя и default
     }
+    
+    # payload = {
+    #     "query": {
+    #         "searchType": "SEARCH_TYPE_RU",  # Поиск по русскоязычным сайтам
+    #         "queryText": query               # Текст поискового запроса
+    #     },
+    #     "folderId": YANDEX_FOLDER_ID,        # ID каталога в Yandex Cloud
+    #     "page": {
+    #         "offset": page * 10               # Смещение для пагинации
+    #     }
+    # }
     
     # Для отладки выводим отправляемые данные
     print(f"Отправка запроса для страницы {page + 1}:")

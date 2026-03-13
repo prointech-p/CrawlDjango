@@ -295,16 +295,13 @@ def crawl_search_results(search_results: List[SearchResult]) -> List[int]:
 
                     # При создании телефонов нужно будет передавать topic
                     topic = search_result.history.topic
-                    print('=============================')
-                    print(search_result)
-                    print(search_result.history)
-                    print(search_result.history.topic)
                     
                     # Сохраняем телефоны
                     phones_created = 0
                     for phone in extracted.get("phones", []):
                          # Проверяем, что телефон не пустой и не дубль
                         if phone and not CrawledPhone.objects.filter(topic=topic, phone=phone).exists(): 
+                            print(phone)
                             CrawledPhone.objects.create(
                                 crawled_data=crawled,
                                 topic=topic,
