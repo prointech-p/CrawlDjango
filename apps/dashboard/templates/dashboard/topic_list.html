@@ -1,0 +1,83 @@
+<!-- apps/dashboard/templates/dashboard/topic_list.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Система | Темы поиска{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-tags"></i> Темы поиска
+                    </h1>
+                    <p class="dashboard-subtitle">
+                        <i class="fas fa-list"></i> Управление и мониторинг тем поиска
+                    </p>
+                </div>
+                <div>
+                    <span class="badge bg-primary">
+                        <i class="fas fa-sync-alt"></i> {% now "d.m.Y H:i" %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="row">
+                {% for topic in topics_with_stats %}
+                <div class="col-md-6 col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-folder-open"></i> {{ topic.name }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <i class="fas fa-search text-info"></i> 
+                                <strong>Запрос:</strong><br>
+                                <small class="text-muted">{{ topic.query_text|truncatechars:100 }}</small>
+                            </p>
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h3 text-primary mb-0">{{ topic.total_phones }}</div>
+                                        <small class="text-muted">телефонов</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h3 text-success mb-0">{{ topic.total_queries }}</div>
+                                        <small class="text-muted">запросов</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt"></i> Создана: {{ topic.created_at|date:"d.m.Y H:i" }}<br>
+                                <i class="fas fa-map-marker-alt"></i> Регион: {{ topic.region|default:"Не указан" }}<br>
+                                <i class="fas fa-file-alt"></i> Страниц: {{ topic.pages_count }}
+                            </small>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="{% url 'dashboard:topic_detail' topic.id %}" class="btn btn-primary w-100">
+                                <i class="fas fa-chart-line"></i> Детальная аналитика
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle fa-2x mb-3 d-block"></i>
+                        <h5>Нет созданных тем поиска</h5>
+                        <p class="mb-0">Создайте новую тему в <a href="/admin/" class="alert-link">административной панели</a></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

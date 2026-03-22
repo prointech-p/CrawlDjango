@@ -1,0 +1,378 @@
+<!-- apps/dashboard/templates/dashboard/index.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Дашборд | CrawlMaster{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-chart-pie"></i> Панель управления
+                    </h1>
+                    <p class="dashboard-subtitle">
+                        <i class="fas fa-chart-line"></i> Актуальная статистика системы мониторинга
+                    </p>
+                </div>
+                <div>
+                    <span class="badge bg-primary">
+                        <i class="fas fa-sync-alt"></i> Обновлено: {% now "d.m.Y H:i" %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Панель фильтров -->
+            <div class="filter-panel">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Фильтры
+                </div>
+                <form method="get" action="{% url 'dashboard:index' %}" id="filterForm">
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label for="topic">
+                                <i class="fas fa-tag"></i> Тема поиска
+                            </label>
+                            <select name="topic" id="topic" class="filter-select">
+                                <option value="all" {% if selected_topic == 'all' %}selected{% endif %}>Все темы</option>
+                                {% for topic in topics %}
+                                    <option value="{{ topic.id }}" {% if selected_topic == topic.id %}selected{% endif %}>
+                                        {{ topic.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="page">
+                                <i class="fas fa-file-alt"></i> Страница выдачи
+                            </label>
+                            <select name="page" id="page" class="filter-select">
+                                <option value="all" {% if selected_page == 'all' %}selected{% endif %}>Все страницы</option>
+                                {% for page_num in pages_list %}
+                                    <option value="{{ page_num }}" {% if selected_page == page_num %}selected{% endif %}>
+                                        Страница {{ page_num }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn-filter btn-filter-primary">
+                                <i class="fas fa-search"></i> Применить
+                            </button>
+                            <a href="{% url 'dashboard:index' %}" class="btn-filter btn-filter-secondary">
+                                <i class="fas fa-undo"></i> Сбросить
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Основные метрики -->
+            <div class="row mb-5">
+                <div class="col-md-4 mb-3 animated-card">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-phone-alt"></i> Новые телефоны (5 дней)
+                            </h5>
+                            <h2>{{ new_phones_last_5_days }}</h2>
+                            <p class="card-text">за последние 5 дней</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 animated-card">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-database"></i> Всего телефонов
+                            </h5>
+                            <h2>{{ total_phones_sum }}</h2>
+                            <p class="card-text">по всем темам</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 animated-card">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-tags"></i> Активных тем
+                            </h5>
+                            <h2>{{ topics|length }}</h2>
+                            <p class="card-text">тем поиска</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Графики - по 2 в строке -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h5>
+                                <i class="fas fa-chart-line"></i> Динамика новых телефонов
+                            </h5>
+                            <small>за последние 5 дней по темам</small>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="phonesChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h5>
+                                <i class="fas fa-chart-bar"></i> Распределение по страницам выдачи
+                            </h5>
+                            <small>количество найденных телефонов</small>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="pagesChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Статистика по темам -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <h5>
+                                <i class="fas fa-table"></i> Детальная статистика по темам
+                            </h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-hashtag"></i> Тема</th>
+                                        <th><i class="fas fa-phone"></i> Всего телефонов</th>
+                                        <th><i class="fas fa-chart-line"></i> За последние 5 дней</th>
+                                        <th><i class="fas fa-chart-simple"></i> Динамика</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for topic in topics_data %}
+                                    <tr>
+                                        <td>
+                                            <span class="table-icon">
+                                                <i class="fas fa-folder"></i>
+                                            </span>
+                                            <strong>{{ topic.name }}</strong><br>
+                                            <small class="text-muted">{{ topic.query_text|truncatechars:50 }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-phone"></i> {{ topic.total_phones }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if topic.phones_last_5_days > 0 %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-chart-line"></i> {{ topic.phones_last_5_days }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-chart-line"></i> 0
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if topic.phones_last_5_days > 0 %}
+                                                <div class="progress-custom">
+                                                    <div class="progress-bar-custom" style="width: {% widthratio topic.phones_last_5_days topic.total_phones 100 %}%"></div>
+                                                </div>
+                                                <small class="text-success mt-1 d-block">
+                                                    <i class="fas fa-arrow-up"></i> Активный рост
+                                                </small>
+                                            {% else %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-minus"></i> Нет данных
+                                                </small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5">
+                                            <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                                            <p class="text-muted">Нет данных о темах</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// График по дням
+const ctx = document.getElementById('phonesChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ dates|safe }},
+        datasets: [
+            {% for topic in topics_data %}
+            {
+                label: '{{ topic.name }}',
+                data: {{ topic.daily_counts }},
+                borderColor: `hsl(${ {{ forloop.counter0 }} * 72 }, 70%, 55%)`,
+                backgroundColor: `hsla(${ {{ forloop.counter0 }} * 72 }, 70%, 55%, 0.1)`,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: `hsl(${ {{ forloop.counter0 }} * 72 }, 70%, 55%)`,
+                pointBorderColor: 'white',
+                tension: 0.4,
+                fill: true
+            },
+            {% endfor %}
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 8,
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: '#fff',
+                bodyColor: '#ddd',
+                borderColor: '#00b8e0',
+                borderWidth: 2
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                },
+                title: {
+                    display: true,
+                    text: 'Количество телефонов',
+                    color: '#6c757d',
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    }
+                },
+                ticks: {
+                    stepSize: 1,
+                    color: '#6c757d',
+                    font: {
+                        size: 10
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Дата',
+                    color: '#6c757d',
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    }
+                },
+                ticks: {
+                    color: '#6c757d',
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    }
+});
+
+// График по страницам - используем готовые данные из контекста
+const pagesCtx = document.getElementById('pagesChart').getContext('2d');
+new Chart(pagesCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ page_chart_labels|safe }},
+        datasets: [{
+            label: 'Количество телефонов',
+            data: {{ page_chart_data }},
+            backgroundColor: 'rgba(0, 184, 224, 0.7)',
+            borderColor: 'rgb(0, 184, 224)',
+            borderWidth: 2,
+            borderRadius: 8,
+            barPercentage: 0.65
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: '#fff',
+                bodyColor: '#ddd',
+                borderColor: '#00b8e0',
+                borderWidth: 2
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Количество телефонов',
+                    font: { size: 11 }
+                },
+                ticks: { stepSize: 1, font: { size: 10 } }
+            },
+            x: {
+                ticks: { font: { size: 10 } }
+            }
+        }
+    }
+});
+
+// Автоматическая отправка формы при изменении фильтров
+document.getElementById('topic').addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('page').addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+</script>
+{% endblock %}

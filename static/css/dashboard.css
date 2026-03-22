@@ -1,0 +1,429 @@
+/* static/dashboard/css/dashboard.css */
+
+/* Переменные цветов */
+:root {
+    --primary-dark: #1a1f3a;
+    --primary: #2a2f4a;
+    --accent: #00b8e0;
+    --success: #28a745;
+    --info: #17a2b8;
+    --text-dark: #2c3e50;
+    --text-gray: #6c757d;
+    --bg-light: #f8f9fa;
+    --border-light: #dee2e6;
+}
+
+/* Общие стили для дашборда */
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Заголовки */
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+    display: inline-block;
+}
+
+.dashboard-title i {
+    color: var(--accent);
+    margin-right: 10px;
+}
+
+.dashboard-subtitle {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+}
+
+/* Улучшаем стандартные карточки Bootstrap */
+.card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card.text-white.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card.text-white.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.card.text-white.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
+
+.card.text-white.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+}
+
+.card-body h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.card-text {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-bottom: 0;
+}
+
+/* Карточки с графиками */
+.chart-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%;
+}
+
+.chart-card:hover {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+}
+
+.chart-header h5 {
+    color: white;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.chart-header h5 i {
+    margin-right: 8px;
+    color: var(--accent);
+}
+
+.chart-header small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.chart-body {
+    padding: 1.5rem;
+    background: white;
+}
+
+/* Таблицы */
+.data-table {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-light);
+}
+
+.data-table .table-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+}
+
+.data-table .table-header h5 {
+    color: white;
+    margin: 0;
+    font-weight: 600;
+}
+
+.data-table .table-header h5 i {
+    margin-right: 8px;
+    color: var(--accent);
+}
+
+.data-table table {
+    margin-bottom: 0;
+}
+
+.data-table thead {
+    background: var(--bg-light);
+}
+
+.data-table thead th {
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-dark);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.data-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.data-table tbody tr:hover {
+    background: var(--bg-light);
+    transition: background 0.2s ease;
+}
+
+/* Badges - улучшаем стандартные */
+.badge {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+    color: #2c3e50;
+}
+
+/* Прогресс-бары */
+.progress-custom {
+    height: 8px;
+    background: var(--border-light);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-bar-custom {
+    background: linear-gradient(90deg, #00b8e0, #9c27b0);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    height: 100%;
+}
+
+/* Иконки в таблице */
+.table-icon {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(0, 184, 224, 0.1);
+    color: #00b8e0;
+    margin-right: 8px;
+}
+
+/* Анимации */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animated-card {
+    animation: slideInUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.animated-card:nth-child(1) { animation-delay: 0.1s; }
+.animated-card:nth-child(2) { animation-delay: 0.2s; }
+.animated-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+    
+    .card-body h2 {
+        font-size: 1.8rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .chart-body {
+        padding: 1rem;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+    }
+}
+
+
+/* Стили для фильтров */
+
+/* Панель фильтров */
+.filter-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-light);
+}
+
+.filter-title {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.filter-title i {
+    color: var(--accent);
+    margin-right: 8px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-item {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-item label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-gray);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: white;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-select:hover {
+    border-color: var(--accent);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 184, 224, 0.1);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-filter {
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-filter-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-filter-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-filter-secondary {
+    background: var(--bg-light);
+    color: var(--text-gray);
+    border: 1px solid var(--border-light);
+}
+
+.btn-filter-secondary:hover {
+    background: var(--border-light);
+    transform: translateY(-2px);
+}
+
+/* Адаптивность для фильтров */
+@media (max-width: 768px) {
+    .filter-group {
+        flex-direction: column;
+    }
+    
+    .filter-item {
+        width: 100%;
+    }
+    
+    .filter-buttons {
+        width: 100%;
+    }
+    
+    .btn-filter {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+
+/* Уменьшаем высоту графика в детальной странице */
+.chart-body canvas {
+    max-height: 200px;
+    width: 100%;
+    height: auto;
+}
