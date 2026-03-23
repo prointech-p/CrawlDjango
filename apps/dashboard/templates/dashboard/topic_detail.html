@@ -73,9 +73,9 @@
                     <div class="card text-white bg-success">
                         <div class="card-body">
                             <h6 class="card-title">
-                                <i class="fas fa-calendar-week"></i> Новых за 30 дней
+                                <i class="fas fa-calendar-week"></i> Новых за 5 дней
                             </h6>
-                            <h2 class="mb-0">{{ new_phones_30_days }}</h2>
+                            <h2 class="mb-0">{{ new_phones_5_days }}</h2>
                         </div>
                     </div>
                 </div>
@@ -83,9 +83,9 @@
                     <div class="card text-white bg-info">
                         <div class="card-body">
                             <h6 class="card-title">
-                                <i class="fas fa-history"></i> Выполнено запросов
+                                <i class="fas fa-calendar-month"></i> Новых за 30 дней
                             </h6>
-                            <h2 class="mb-0">{{ search_details|length }}</h2>
+                            <h2 class="mb-0">{{ new_phones_30_days }}</h2>
                         </div>
                     </div>
                 </div>
@@ -104,6 +104,95 @@
                         <div class="chart-body">
                             <canvas id="pagesChart" width="400" height="200" style="max-height: 200px;"></canvas>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Списки телефонов -->
+            <div class="row mb-4">
+                <!-- Все телефоны -->
+                <div class="col-md-6 mb-4">
+                    <div class="data-table">
+                        <div class="table-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-phone-alt"></i> Все телефоны
+                            </h5>
+                            {% if all_phones %}
+                            <button class="btn btn-sm btn-light" onclick="copyPhones('all-phones-list', this)">
+                                <i class="fas fa-copy"></i> Копировать все
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <div id="all-phones-list" class="p-3">
+                                {% if all_phones %}
+                                    {% for phone in all_phones %}
+                                        <div class="phone-item p-2 border-bottom">
+                                            <i class="fas fa-phone text-info me-2"></i>
+                                            <code class="phone-number">{{ phone.phone }}</code>
+                                            <small class="text-muted ms-2">
+                                                ({{ phone.created_at|date:"d.m.Y H:i" }})
+                                            </small>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                        <p>Нет данных о телефонах</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if all_phones %}
+                        <div class="p-3 bg-light border-top">
+                            <small class="text-muted">
+                                <i class="fas fa-chart-line"></i> Всего: {{ all_phones|length }} телефонов
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Телефоны за последние 5 дней -->
+                <div class="col-md-6 mb-4">
+                    <div class="data-table">
+                        <div class="table-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar-week"></i> Телефоны за последние 5 дней
+                            </h5>
+                            {% if recent_phones %}
+                            <button class="btn btn-sm btn-light" onclick="copyPhones('recent-phones-list', this)">
+                                <i class="fas fa-copy"></i> Копировать все
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <div id="recent-phones-list" class="p-3">
+                                {% if recent_phones %}
+                                    {% for phone in recent_phones %}
+                                        <div class="phone-item p-2 border-bottom">
+                                            <i class="fas fa-phone text-success me-2"></i>
+                                            <code class="phone-number">{{ phone.phone }}</code>
+                                            <small class="text-muted ms-2">
+                                                ({{ phone.created_at|date:"d.m.Y H:i" }})
+                                            </small>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                        <p>Нет новых телефонов за последние 5 дней</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if recent_phones %}
+                        <div class="p-3 bg-light border-top">
+                            <small class="text-muted">
+                                <i class="fas fa-chart-line"></i> Найдено: {{ recent_phones|length }} новых телефонов
+                            </small>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -185,6 +274,7 @@
 
 {% block extra_js %}
 <script>
+// График по страницам
 const pagesCtx = document.getElementById('pagesChart').getContext('2d');
 new Chart(pagesCtx, {
     type: 'bar',
@@ -233,5 +323,36 @@ new Chart(pagesCtx, {
         }
     }
 });
+
+// Функция копирования телефонов в буфер обмена
+function copyPhones(elementId, buttonElement) {
+    const container = document.getElementById(elementId);
+    const phoneNumbers = Array.from(container.querySelectorAll('.phone-number'))
+        .map(el => el.textContent.trim());
+    
+    if (phoneNumbers.length === 0) {
+        alert('Нет телефонов для копирования');
+        return;
+    }
+    
+    const textToCopy = phoneNumbers.join('\n');
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        // Показываем уведомление на кнопке
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="fas fa-check"></i> Скопировано!';
+        buttonElement.classList.remove('btn-light');
+        buttonElement.classList.add('btn-success');
+        
+        setTimeout(() => {
+            buttonElement.innerHTML = originalText;
+            buttonElement.classList.remove('btn-success');
+            buttonElement.classList.add('btn-light');
+        }, 2000);
+    }).catch(err => {
+        console.error('Ошибка копирования:', err);
+        alert('Не удалось скопировать телефоны');
+    });
+}
 </script>
 {% endblock %}

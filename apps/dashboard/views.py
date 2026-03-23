@@ -207,6 +207,13 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
             created_at__gte=thirty_days_ago
         ).count()
         
+        # Новые телефоны за последние 5 дней
+        five_days_ago = timezone.now() - timedelta(days=5)
+        context['new_phones_5_days'] = CrawledPhone.objects.filter(
+            topic=topic,
+            created_at__gte=five_days_ago
+        ).count()
+        
         # Статистика по страницам для этой темы
         page_stats = {}
         for page in range(1, 6):
@@ -230,5 +237,17 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
             page_stats[page] = phone_count
         
         context['page_stats'] = page_stats
+        
+        # Списки телефонов
+        # Все телефоны по теме
+        all_phones = CrawledPhone.objects.filter(topic=topic).order_by('-created_at')
+        context['all_phones'] = all_phones
+        
+        # Телефоны за последние 5 дней
+        recent_phones = CrawledPhone.objects.filter(
+            topic=topic,
+            created_at__gte=five_days_ago
+        ).order_by('-created_at')
+        context['recent_phones'] = recent_phones
         
         return context

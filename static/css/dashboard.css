@@ -427,3 +427,39 @@
     width: 100%;
     height: auto;
 }
+
+
+/* Стили для списка телефонов */
+.phone-item {
+    transition: background-color 0.2s ease;
+}
+
+.phone-item:hover {
+    background-color: #f8f9fa;
+}
+
+.phone-number {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* Стили для скроллбара в списках */
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
