@@ -254,6 +254,7 @@ class SearchResultAdmin(admin.ModelAdmin):
         'domain', 
         'title_preview', 
         'position', 
+        'page',
         # 'status_icons', 
         'created_at_short'
     ]

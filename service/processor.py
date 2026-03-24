@@ -176,9 +176,13 @@ def process_topic(topic_id: int,
             return result
 
         # 4. Сохраняем результаты поиска в БД
+        if search_results:
+            page_size = search_results[0]['page_size']
+
         history = SearchHistory.objects.create(
             topic=topic,
             results_count=len(search_results),
+            page_size=page_size,
             status=SearchHistory.Status.SUCCESS
         )
         
@@ -205,6 +209,7 @@ def process_topic(topic_id: int,
                 domain=res.get('domain'),
                 snippet=res.get('snippet'),
                 position=res.get('position'),
+                page=res.get('page'),
                 processed=False,
                 skipped=excluded,
                 skip_reason=f"Исключение: {pattern}" if excluded else None

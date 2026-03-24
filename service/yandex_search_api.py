@@ -197,9 +197,10 @@ def search_by_topic(query: str, pages: int = 1) -> List[Dict[str, Any]]:
         # Получаем результаты для текущей страницы
         page_results = fetch_search_page(query, page)
         
-        # Добавляем информацию о позиции (1-10, 11-20 и т.д.)
+        # Добавляем информацию о позиции (1-10, 11-20 и т.д.) и странице
         for idx, result in enumerate(page_results):
-            result['position'] = page * 10 + idx + 1
+            result['page_size'] = len(page_results)
+            result['position'] = page * len(page_results) + idx + 1
             result['page'] = page + 1
             all_results.append(result)
         

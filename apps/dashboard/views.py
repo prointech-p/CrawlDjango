@@ -86,12 +86,9 @@ class IndexView(LoginRequiredMixin, TemplateView):
         # Статистика по страницам поисковой выдачи
         page_stats = {}
         for page in range(1, 6):
-            start_position = (page - 1) * 10 + 1
-            end_position = page * 10
             
             search_results = SearchResult.objects.filter(
-                position__gte=start_position,
-                position__lte=end_position,
+                page=page,
                 crawled_data__isnull=False
             )
             
@@ -170,6 +167,19 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         topic = self.get_object()
         
+        # Получаем параметр days из GET запроса (по умолчанию 5)
+        days = self.request.GET.get('days', '5')
+        try:
+            days = int(days)
+            if days < 1:
+                days = 1
+            if days > 30:
+                days = 30
+        except ValueError:
+            days = 5
+        
+        context['selected_days'] = days
+        
         # История поисковых запросов
         search_histories = SearchHistory.objects.filter(topic=topic).order_by('-search_datetime')
         
@@ -207,25 +217,29 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
             created_at__gte=thirty_days_ago
         ).count()
         
-        # Новые телефоны за последние 5 дней
+        # Новые телефоны за выбранное количество дней
+        days_ago = timezone.now() - timedelta(days=days)
+        context['new_phones_selected_days'] = CrawledPhone.objects.filter(
+            topic=topic,
+            created_at__gte=days_ago
+        ).count()
+        
+        # Новые телефоны за последние 5 дней (для быстрого доступа)
         five_days_ago = timezone.now() - timedelta(days=5)
         context['new_phones_5_days'] = CrawledPhone.objects.filter(
             topic=topic,
             created_at__gte=five_days_ago
         ).count()
         
-        # Статистика по страницам для этой темы
-        page_stats = {}
+        # Статистика по страницам для этой темы (все время)
+        page_stats_all = {}
         for page in range(1, 6):
-            start_position = (page - 1) * 10 + 1
-            end_position = page * 10
             
             histories = SearchHistory.objects.filter(topic=topic)
             
             search_results = SearchResult.objects.filter(
                 history__in=histories,
-                position__gte=start_position,
-                position__lte=end_position,
+                page=page,
                 crawled_data__isnull=False
             ).distinct()
             
@@ -234,20 +248,48 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
                 topic=topic
             ).count()
             
-            page_stats[page] = phone_count
+            page_stats_all[page] = phone_count
         
-        context['page_stats'] = page_stats
+        context['page_stats_all'] = page_stats_all
+        
+        # Статистика по страницам за выбранное количество дней
+        page_stats_selected = {}
+        days_ago = timezone.now() - timedelta(days=days)
+        
+        for page in range(1, 6):
+            
+            histories = SearchHistory.objects.filter(topic=topic)
+            
+            search_results = SearchResult.objects.filter(
+                history__in=histories,
+                page=page,
+                crawled_data__isnull=False
+            ).distinct()
+            
+            # Фильтруем телефоны по дате создания
+            phone_count = CrawledPhone.objects.filter(
+                crawled_data__search_result__in=search_results,
+                topic=topic,
+                created_at__gte=days_ago
+            ).count()
+            
+            page_stats_selected[page] = phone_count
+        
+        context['page_stats_selected'] = page_stats_selected
         
         # Списки телефонов
         # Все телефоны по теме
         all_phones = CrawledPhone.objects.filter(topic=topic).order_by('-created_at')
         context['all_phones'] = all_phones
         
-        # Телефоны за последние 5 дней
+        # Телефоны за выбранное количество дней
         recent_phones = CrawledPhone.objects.filter(
             topic=topic,
-            created_at__gte=five_days_ago
+            created_at__gte=days_ago
         ).order_by('-created_at')
         context['recent_phones'] = recent_phones
+        
+        # Список дней для выбора (1-30)
+        context['days_range'] = range(1, 8)
         
         return context

@@ -65,6 +65,7 @@ class SearchHistory(models.Model):
         topic: ID темы поиска (внешний ключ)
         search_datetime: Дата и время выполнения запроса
         results_count: Количество полученных результатов в выдаче
+        page_size: Размер страницы поисковой выдачи (количество результатов на странице)
         status: Статус выполнения ('success' или 'error')
         error_message: Текст ошибки (если статус 'error')
         created_at: Дата создания записи
@@ -89,6 +90,11 @@ class SearchHistory(models.Model):
         default=0,
         verbose_name="Количество полученных результатов",
         help_text="Количество полученных результатов"
+    )
+    page_size = models.IntegerField(
+        default=50,
+        verbose_name="Размер страницы выдачи",
+        help_text="Количество результатов на одной странице поисковой выдачи"
     )
     status = models.CharField(
         max_length=20,
@@ -198,6 +204,12 @@ class SearchResult(models.Model):
         null=True,
         verbose_name="Позиция в выдаче",
         help_text="Позиция в выдаче"
+    )
+    page = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Номер страницы выдачи",
+        help_text="Номер страницы поисковой выдачи (1, 2, 3...)"
     )
     processed = models.BooleanField(
         default=False,

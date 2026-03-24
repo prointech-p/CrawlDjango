@@ -73,7 +73,7 @@
                     <div class="card text-white bg-success">
                         <div class="card-body">
                             <h6 class="card-title">
-                                <i class="fas fa-calendar-week"></i> Новых за 5 дней
+                                <i class="fas fa-calendar-week"></i> За последние 5 дней
                             </h6>
                             <h2 class="mb-0">{{ new_phones_5_days }}</h2>
                         </div>
@@ -83,7 +83,7 @@
                     <div class="card text-white bg-info">
                         <div class="card-body">
                             <h6 class="card-title">
-                                <i class="fas fa-calendar-month"></i> Новых за 30 дней
+                                <i class="fas fa-calendar-month"></i> За последние 30 дней
                             </h6>
                             <h2 class="mb-0">{{ new_phones_30_days }}</h2>
                         </div>
@@ -91,15 +91,29 @@
                 </div>
             </div>
             
-            <!-- График по страницам -->
+            <!-- График по страницам с фильтром по дням -->
             <div class="row mb-4">
                 <div class="col-md-12">
                     <div class="chart-card">
                         <div class="chart-header">
-                            <h5>
-                                <i class="fas fa-chart-bar"></i> Распределение по страницам выдачи
-                            </h5>
-                            <small>количество найденных телефонов</small>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-chart-bar"></i> Распределение по страницам выдачи
+                                </h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="text-white small mb-0">
+                                        <i class="fas fa-calendar"></i> За последние:
+                                    </label>
+                                    <select id="daysFilter" class="form-select form-select-sm" style="width: auto; background: rgba(255,255,255,0.2); color: white; border: none;">
+                                        {% for day in days_range %}
+                                            <option value="{{ day }}" {% if selected_days == day %}selected{% endif %}>
+                                                {{ day }} {% if day == 1 %}день{% elif day < 5 %}дня{% else %}дней{% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <small class="mt-2 d-block">количество найденных телефонов</small>
                         </div>
                         <div class="chart-body">
                             <canvas id="pagesChart" width="400" height="200" style="max-height: 200px;"></canvas>
@@ -153,18 +167,28 @@
                     </div>
                 </div>
                 
-                <!-- Телефоны за последние 5 дней -->
+                <!-- Телефоны за выбранное количество дней -->
                 <div class="col-md-6 mb-4">
                     <div class="data-table">
                         <div class="table-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
-                                <i class="fas fa-calendar-week"></i> Телефоны за последние 5 дней
+                                <i class="fas fa-calendar-week"></i> Телефоны за последние {{ selected_days }} 
+                                {% if selected_days == 1 %}день{% elif selected_days < 5 %}дня{% else %}дней{% endif %}
                             </h5>
-                            {% if recent_phones %}
-                            <button class="btn btn-sm btn-light" onclick="copyPhones('recent-phones-list', this)">
-                                <i class="fas fa-copy"></i> Копировать все
-                            </button>
-                            {% endif %}
+                            <div class="d-flex gap-2">
+                                <select id="daysFilterPhones" class="form-select form-select-sm" style="width: auto;">
+                                    {% for day in days_range %}
+                                        <option value="{{ day }}" {% if selected_days == day %}selected{% endif %}>
+                                            {{ day }} {{ day|pluralize:"день,дня,дней" }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if recent_phones %}
+                                <button class="btn btn-sm btn-light" onclick="copyPhones('recent-phones-list', this)">
+                                    <i class="fas fa-copy"></i> Копировать все
+                                </button>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                             <div id="recent-phones-list" class="p-3">
@@ -181,7 +205,7 @@
                                 {% else %}
                                     <div class="text-center text-muted py-5">
                                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                        <p>Нет новых телефонов за последние 5 дней</p>
+                                        <p>Нет новых телефонов за последние {{ selected_days }} дней</p>
                                     </div>
                                 {% endif %}
                             </div>
@@ -224,21 +248,20 @@
                                         <td>
                                             <strong>{{ detail.search_datetime|date:"d.m.Y" }}</strong><br>
                                             <small class="text-muted">{{ detail.search_datetime|date:"H:i:s" }}</small>
-                                        </td>
-                                        <td>{{ detail.total_urls }}</td>
-                                        <td>{{ detail.processed_urls }}</td>
-                                        <td>
+                                        <td class="text-center">{{ detail.total_urls }}</td>
+                                        <td class="text-center">{{ detail.processed_urls }}</td>
+                                        <td class="text-center">
                                             <span class="badge bg-success">
                                                 <i class="fas fa-phone"></i> {{ detail.phones_found }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td style="min-width: 100px;">
                                             <div class="progress-custom">
                                                 <div class="progress-bar-custom" style="width: {{ detail.efficiency }}%"></div>
                                             </div>
                                             <small class="text-muted">{{ detail.efficiency|floatformat:1 }}%</small>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             {% if detail.status == 'success' %}
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-check"></i> Успешно
@@ -274,57 +297,111 @@
 
 {% block extra_js %}
 <script>
-// График по страницам
-const pagesCtx = document.getElementById('pagesChart').getContext('2d');
-new Chart(pagesCtx, {
-    type: 'bar',
-    data: {
-        labels: ['Страница 1', 'Страница 2', 'Страница 3', 'Страница 4', 'Страница 5'],
-        datasets: [{
-            label: 'Количество телефонов',
-            data: [
-                {{ page_stats.1|default:0 }},
-                {{ page_stats.2|default:0 }},
-                {{ page_stats.3|default:0 }},
-                {{ page_stats.4|default:0 }},
-                {{ page_stats.5|default:0 }}
-            ],
-            backgroundColor: 'rgba(0, 184, 224, 0.7)',
-            borderColor: 'rgb(0, 184, 224)',
-            borderWidth: 2,
-            borderRadius: 8,
-            barPercentage: 0.65
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    font: { size: 11 }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Количество телефонов',
-                    font: { size: 11 }
-                },
-                ticks: { stepSize: 1, font: { size: 10 } }
-            },
-            x: {
-                ticks: { font: { size: 10 } }
-            }
-        }
-    }
+// Функция для перезагрузки страницы с новым параметром days
+function updateDays(days) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('days', days);
+    window.location.href = url.toString();
+}
+
+// Обработчики для фильтров
+document.getElementById('daysFilter').addEventListener('change', function() {
+    updateDays(this.value);
 });
 
-// Функция копирования телефонов в буфер обмена
+const daysFilterPhones = document.getElementById('daysFilterPhones');
+if (daysFilterPhones) {
+    daysFilterPhones.addEventListener('change', function() {
+        updateDays(this.value);
+    });
+}
+
+// Инициализация графика
+const pagesCtx = document.getElementById('pagesChart').getContext('2d');
+let chart;
+
+function initChart() {
+    // Данные за все время
+    const allData = [
+        {{ page_stats_all.1|default:0 }},
+        {{ page_stats_all.2|default:0 }},
+        {{ page_stats_all.3|default:0 }},
+        {{ page_stats_all.4|default:0 }},
+        {{ page_stats_all.5|default:0 }}
+    ];
+    
+    // Данные за выбранный период
+    const selectedData = [
+        {{ page_stats_selected.1|default:0 }},
+        {{ page_stats_selected.2|default:0 }},
+        {{ page_stats_selected.3|default:0 }},
+        {{ page_stats_selected.4|default:0 }},
+        {{ page_stats_selected.5|default:0 }}
+    ];
+    
+    if (chart) {
+        chart.destroy();
+    }
+    
+    chart = new Chart(pagesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Страница 1', 'Страница 2', 'Страница 3', 'Страница 4', 'Страница 5'],
+            datasets: [
+                {
+                    label: 'За все время',
+                    data: allData,
+                    backgroundColor: 'rgba(0, 184, 224, 0.5)',
+                    borderColor: 'rgb(0, 184, 224)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barPercentage: 0.65
+                },
+                {
+                    label: 'За последние {{ selected_days }} дней',
+                    data: selectedData,
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: 'rgb(40, 167, 69)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barPercentage: 0.65
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Количество телефонов',
+                        font: { size: 11 }
+                    },
+                    ticks: { stepSize: 1, font: { size: 10 } }
+                },
+                x: {
+                    ticks: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+// Функция копирования телефонов
 function copyPhones(elementId, buttonElement) {
     const container = document.getElementById(elementId);
     const phoneNumbers = Array.from(container.querySelectorAll('.phone-number'))
@@ -338,7 +415,6 @@ function copyPhones(elementId, buttonElement) {
     const textToCopy = phoneNumbers.join('\n');
     
     navigator.clipboard.writeText(textToCopy).then(() => {
-        // Показываем уведомление на кнопке
         const originalText = buttonElement.innerHTML;
         buttonElement.innerHTML = '<i class="fas fa-check"></i> Скопировано!';
         buttonElement.classList.remove('btn-light');
@@ -354,5 +430,8 @@ function copyPhones(elementId, buttonElement) {
         alert('Не удалось скопировать телефоны');
     });
 }
+
+// Инициализация при загрузке
+initChart();
 </script>
 {% endblock %}
