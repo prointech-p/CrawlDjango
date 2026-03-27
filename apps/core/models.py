@@ -362,15 +362,21 @@ class CrawledPhone(models.Model):
         verbose_name="Дата создания",
         help_text="Дата создания"
     )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последнего обновления",
+        help_text="Дата последнего обновления записи"
+    )
     
     class Meta:
         db_table = 'crawled_phones'
         verbose_name = 'Найденный телефон'
         verbose_name_plural = 'Найденные телефоны'
-        ordering = ['crawled_data']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['phone']),
             models.Index(fields=['topic', 'phone']),  # индекс для быстрого поиска дублей
+            models.Index(fields=['updated_at']),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -419,15 +425,21 @@ class CrawledEmail(models.Model):
         verbose_name="Дата создания",
         help_text="Дата создания"
     )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последнего обновления",
+        help_text="Дата последнего обновления записи"
+    )
     
     class Meta:
         db_table = 'crawled_emails'
         verbose_name = 'Найденный email'
         verbose_name_plural = 'Найденные email'
-        ordering = ['crawled_data']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['email']),
             models.Index(fields=['topic', 'email']),  # индекс для быстрого поиска дублей
+            models.Index(fields=['updated_at']),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -472,12 +484,20 @@ class CrawledAddress(models.Model):
         verbose_name="Дата создания",
         help_text="Дата создания"
     )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последнего обновления",
+        help_text="Дата последнего обновления записи"
+    )
     
     class Meta:
         db_table = 'crawled_addresses'
         verbose_name = 'Найденный адрес'
         verbose_name_plural = 'Найденные адреса'
-        ordering = ['crawled_data']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['updated_at']),
+        ]
     
     def __str__(self):
         return self.address[:50] + "..." if len(self.address) > 50 else self.address

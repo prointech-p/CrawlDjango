@@ -18,7 +18,7 @@ from typing import Dict, Any, List, Optional
 
 # Импортируем модели и функции обработки
 from apps.core.models import SearchTopic, SearchHistory, SearchResult
-from service.processor import process_topic, crawl_search_results
+from service.processor import process_topic, crawl_search_results, cleanup_old_data
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
@@ -88,7 +88,19 @@ class Command(BaseCommand):
             action='store_true',
             help='Отправить отчёт на email после завершения'
         )
-    
+
+        parser.add_argument(
+            '--skip-cleanup',
+            action='store_true',
+            help='Пропустить очистку старых данных перед обработкой'
+        )
+
+        parser.add_argument(
+            '--cleanup-only',
+            action='store_true',
+            help='Только очистка старых данных, без обработки тем'
+        )
+            
     def handle(self, *args, **options):
         """
         Основной метод обработки команды.
@@ -99,6 +111,18 @@ class Command(BaseCommand):
         if options['verbose']:
             logging.getLogger().setLevel(logging.DEBUG)
             self.stdout.write("Режим подробного логирования включен")
+
+        # Если указан cleanup-only - только очистка
+        if options['cleanup_only']:
+            self.stdout.write(self.style.WARNING('🧹 Режим только очистки...'))
+            cleanup_result = cleanup_old_data()
+            self.stdout.write(self.style.SUCCESS(
+                f"✅ Очистка завершена: удалено {cleanup_result['total_deleted']} записей "
+                f"(телефоны: {cleanup_result['phones_deleted']}, "
+                f"email: {cleanup_result['emails_deleted']}, "
+                f"адреса: {cleanup_result['addresses_deleted']})"
+            ))
+            return
         
         self.stdout.write(self.style.SUCCESS('🚀 Запуск краулинга тем...'))
         

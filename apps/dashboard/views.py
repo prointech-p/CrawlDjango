@@ -177,8 +177,12 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
                 days = 30
         except ValueError:
             days = 5
+
+        # Получаем параметр filter_type: 'new' (только новые) или 'all' (включая обновлённые)
+        filter_type = self.request.GET.get('filter_type', 'new')
         
         context['selected_days'] = days
+        context['selected_filter_type'] = filter_type
         
         # История поисковых запросов
         search_histories = SearchHistory.objects.filter(topic=topic).order_by('-search_datetime')
@@ -283,10 +287,21 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
         context['all_phones'] = all_phones
         
         # Телефоны за выбранное количество дней
-        recent_phones = CrawledPhone.objects.filter(
-            topic=topic,
-            created_at__gte=days_ago
-        ).order_by('-created_at')
+        if filter_type == 'new':
+            # Только новые (созданные за период)
+            recent_phones = CrawledPhone.objects.filter(
+                topic=topic,
+                created_at__gte=days_ago
+            ).order_by('-created_at')
+            context['recent_phones_label'] = f'Новые телефоны за последние {days} дней'
+        else:
+            # Все телефоны, обновлённые за период (включая перепроверенные)
+            recent_phones = CrawledPhone.objects.filter(
+                topic=topic,
+                updated_at__gte=days_ago
+            ).order_by('-updated_at')
+            context['recent_phones_label'] = f'Телефоны (включая обновлённые) за последние {days} дней'
+        
         context['recent_phones'] = recent_phones
         
         # Список дней для выбора (1-30)
