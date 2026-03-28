@@ -124,126 +124,237 @@
             
             <!-- Списки телефонов -->
             <div class="row mb-4">
-                <!-- Все телефоны -->
-                <div class="col-md-6 mb-4">
-                    <div class="data-table h-100">
-                        <div class="table-header d-flex justify-content-between align-items-center" style="min-height: 65px;">
-                            <h5 class="mb-0">
-                                <i class="fas fa-phone-alt"></i> Все телефоны<br>за весь хранимый период
-                            </h5>
-                            {% if all_phones %}
-                            <button class="btn btn-sm btn-light" onclick="copyPhones('all-phones-list', this)">
-                                <i class="fas fa-copy"></i> Копировать
-                            </button>
-                            {% endif %}
-                        </div>
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <div id="all-phones-list" class="p-3">
-                                {% if all_phones %}
-                                    {% for phone in all_phones %}
-                                        <div class="phone-item p-2 border-bottom">
-                                            <i class="fas fa-phone text-info me-2"></i>
-                                            <code class="phone-number">{{ phone.phone }}</code>
-                                            <small class="text-muted ms-2">
-                                                ({{ phone.created_at|date:"d.m.Y H:i" }})
-                                            </small>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="text-center text-muted py-5">
-                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                        <p>Нет данных о телефонах</p>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if all_phones %}
-                        <div class="p-3 bg-light border-top">
-                            <small class="text-muted">
-                                <i class="fas fa-chart-line"></i> Всего: {{ all_phones|length }} телефонов
-                            </small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Телефоны за выбранное количество дней -->
-                <div class="col-md-6 mb-4">
-                    <div class="data-table h-100">
-                        <div class="table-header d-flex justify-content-between align-items-center" style="min-height: 65px;">                              
-                            <h5 class="mb-0" style="line-height: 1.3;">
-                                <i class="fas fa-calendar-week"></i> 
-                                {% if selected_filter_type == 'new' %}
-                                    Новые телефоны<br>за последние {{ selected_days }}
-                                {% else %}
-                                    Телефоны<br>за последние {{ selected_days }}
-                                {% endif %}
-                                {% if selected_days == 1 %}день{% elif selected_days < 5 %}дня{% else %}дней{% endif %}
-                            </h5>
-                            <div class="d-flex gap-2 align-items-center flex-shrink-0">
-                                <select id="daysFilterPhones" class="form-select form-select-sm" style="width: 80px;">
-                                    {% for day in days_range %}
-                                        <option value="{{ day }}" {% if selected_days == day %}selected{% endif %}>
-                                            {{ day }} дн.
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                
-                                <select id="filterTypeSelect" class="form-select form-select-sm" style="width: 160px;">
-                                    <option value="new" {% if selected_filter_type == 'new' %}selected{% endif %}>
-                                        🆕 Только новые
-                                    </option>
-                                    <option value="all" {% if selected_filter_type == 'all' %}selected{% endif %}>
-                                        🔄 С обновлёнными
-                                    </option>
-                                </select>
-                                
-                                {% if recent_phones %}
-                                <button class="btn btn-sm btn-light" onclick="copyPhones('recent-phones-list', this)">
-                                    <i class="fas fa-copy"></i> Копировать
-                                </button>
-                                {% endif %}
-                            </div>
-                        </div>
+<!-- Все телефоны -->
+<div class="col-md-6 mb-4">
+    <div class="data-table h-100">
+        <div class="table-header d-flex justify-content-between align-items-center" style="min-height: 65px;">
+            <h5 class="mb-0">
+                <i class="fas fa-phone-alt"></i> Все телефоны<br>за весь хранимый период
+            </h5>
+            {% if all_phones %}
+            <button class="btn btn-sm btn-light" onclick="copyPhones('all-phones-list', this)">
+                <i class="fas fa-copy"></i> Копировать
+            </button>
+            <button class="btn btn-sm btn-light" onclick="exportToExcel('all-phones-table', '{{ topic.name }}_все_телефоны')" title="Экспорт в Excel">
+                <i class="fas fa-file-excel text-success"></i> Excel
+            </button>
+            {% endif %}
+        </div>
 
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <div id="recent-phones-list" class="p-3">
-                                {% if recent_phones %}
-                                    {% for phone in recent_phones %}
-                                        <div class="phone-item p-2 border-bottom">
-                                            <i class="fas fa-phone {% if selected_filter_type == 'new' %}text-success{% else %}text-warning{% endif %} me-2"></i>
-                                            <code class="phone-number">{{ phone.phone }}</code>
-                                            <small class="text-muted ms-2">
-                                                {% if selected_filter_type == 'new' %}
-                                                    🆕 {{ phone.created_at|date:"d.m.Y H:i" }}
-                                                {% else %}
-                                                    🔄 {{ phone.updated_at|date:"d.m.Y H:i" }}
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                    {% endfor %}
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-hover table-sm mb-0" id="all-phones-table">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 35%;">Телефон</th>
+                        <th style="width: 25%;">Страницы</th>
+                        <th style="width: 20%;">Появилось</th>
+                        <th style="width: 20%;">Обновлено</th>
+                    </tr>
+                </thead>
+                <tbody id="all-phones-list">
+                    {% if all_phones %}
+                        {% for phone in all_phones %}
+                        <tr class="phone-row">
+                            <!-- Телефон -->
+                            <td class="align-middle">
+                                <i class="fas fa-phone text-primary me-2 fa-fw"></i>
+                                <code class="phone-number fw-semibold">{{ phone.phone }}</code>
+                            </td>
+                            
+                            <!-- Страницы -->
+                            <td class="align-middle">
+                                {% if phone.first_seen_page and phone.last_seen_page %}
+                                    {% if phone.first_seen_page == phone.last_seen_page %}
+                                        <span class="badge bg-warning bg-opacity-10 px-2 py-1">
+                                            <i class="fas fa-map-pin me-1"></i>
+                                            {{ phone.first_seen_page }}
+                                        </span>
+                                    {% elif phone.first_seen_page < phone.last_seen_page %}
+                                        <span class="badge bg-danger bg-opacity-10 px-2 py-1">
+                                            <i class="fas fa-arrow-down me-1"></i>
+                                            {{ phone.first_seen_page }} → {{ phone.last_seen_page }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10 px-2 py-1">
+                                            <i class="fas fa-arrow-up me-1"></i>
+                                            {{ phone.first_seen_page }} → {{ phone.last_seen_page }}
+                                        </span>
+                                    {% endif %}
                                 {% else %}
-                                    <div class="text-center text-muted py-5">
-                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                        <p>Нет данных за последние {{ selected_days }} дней</p>
-                                    </div>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1">
+                                        <i class="fas fa-question me-1"></i>
+                                        —
+                                    </span>
                                 {% endif %}
-                            </div>
-                        </div>
-                        {% if recent_phones %}
-                        <div class="p-3 bg-light border-top">
-                            <small class="text-muted">
-                                <i class="fas fa-chart-line"></i> 
-                                {% if selected_filter_type == 'new' %}
-                                    Найдено новых: {{ recent_phones|length }}
+                            </td>
+                            
+                            <!-- Первое появление -->
+                            <td class="align-middle text-nowrap">
+                                <i class="fas fa-calendar-plus text-info me-1"></i>
+                                <small class="text-muted">{{ phone.created_at|date:"d.m.Y H:i" }}</small>
+                            </td>
+                            
+                            <!-- Последнее обновление -->
+                            <td class="align-middle text-nowrap">
+                                <i class="fas fa-sync-alt text-warning me-1"></i>
+                                <small class="text-muted">{{ phone.updated_at|date:"d.m.Y H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="fas fa-inbox fa-2x text-muted mb-2 d-block"></i>
+                                <p class="text-muted mb-0">Нет данных о телефонах</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if all_phones %}
+        <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <i class="fas fa-chart-line me-1"></i> 
+                Всего: {{ all_phones|length }} телефонов
+            </small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+
+                
+<!-- Телефоны за выбранное количество дней -->
+<div class="col-md-6 mb-4">
+    <div class="data-table h-100">
+        <div class="table-header d-flex justify-content-between align-items-center" style="min-height: 65px;">                              
+            <h5 class="mb-0" style="line-height: 1.3;">
+                <i class="fas fa-calendar-week"></i> 
+                {% if selected_filter_type == 'new' %}
+                    Новые телефоны<br>за последние {{ selected_days }}
+                {% else %}
+                    Телефоны<br>за последние {{ selected_days }}
+                {% endif %}
+                {% if selected_days == 1 %}день{% elif selected_days < 5 %}дня{% else %}дней{% endif %}
+            </h5>
+            <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                <select id="daysFilterPhones" class="form-select form-select-sm" style="width: 80px;">
+                    {% for day in days_range %}
+                        <option value="{{ day }}" {% if selected_days == day %}selected{% endif %}>
+                            {{ day }} дн.
+                        </option>
+                    {% endfor %}
+                </select>
+                
+                <select id="filterTypeSelect" class="form-select form-select-sm" style="width: 160px;">
+                    <option value="new" {% if selected_filter_type == 'new' %}selected{% endif %}>
+                        🆕 Только новые
+                    </option>
+                    <option value="all" {% if selected_filter_type == 'all' %}selected{% endif %}>
+                        🔄 С обновлёнными
+                    </option>
+                </select>
+                
+                {% if recent_phones %}
+                <button class="btn btn-sm btn-light" onclick="copyPhones('recent-phones-list', this)">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button class="btn btn-sm btn-light" onclick="exportToExcel('recent-phones-table', '{{ topic.name }}_телефоны_за_{{ selected_days }}_дней')" title="Экспорт в Excel">
+                    <i class="fas fa-file-excel text-success"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-hover table-sm mb-0" id="recent-phones-table">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 35%;">Телефон</th>
+                        <th style="width: 25%;">Страницы</th>
+                        <th style="width: 20%;">Появилось</th>
+                        <th style="width: 20%;">Обновлено</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-phones-list">
+                    {% if recent_phones %}
+                        {% for phone in recent_phones %}
+                        <tr class="phone-row" style="max-height: 10px !important;">
+                            <!-- Телефон -->
+                            <td class="align-middle">
+                                <i class="fas fa-phone {% if selected_filter_type == 'new' %}text-success{% else %}text-primary{% endif %} me-2 fa-fw"></i>
+                                <code class="phone-number fw-semibold">{{ phone.phone }}</code>
+                            </td>
+                            
+                            <!-- Страницы -->
+                            <td class="align-middle">
+                                {% if phone.first_seen_page and phone.last_seen_page %}
+                                    {% if phone.first_seen_page == phone.last_seen_page %}
+                                        <span class="badge bg-warning bg-opacity-10 px-2 py-1">
+                                            <i class="fas fa-map-pin me-1"></i>
+                                            {{ phone.first_seen_page }} → {{ phone.last_seen_page }}
+                                        </span>
+                                    {% elif phone.first_seen_page < phone.last_seen_page %}
+                                        <span class="badge bg-danger bg-opacity-10  px-2 py-1">
+                                            <i class="fas fa-arrow-down me-1"></i>
+                                            {{ phone.first_seen_page }} → {{ phone.last_seen_page }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10  px-2 py-1">
+                                            <i class="fas fa-arrow-up me-1"></i>
+                                            {{ phone.first_seen_page }} → {{ phone.last_seen_page }}
+                                        </span>
+                                    {% endif %}
                                 {% else %}
-                                    Найдено (с обновлениями): {{ recent_phones|length }}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1">
+                                        <i class="fas fa-question me-1"></i>
+                                        —
+                                    </span>
                                 {% endif %}
-                            </small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+                            </td>
+                            
+                            <!-- Первое появление -->
+                            <td class="align-middle text-nowrap">
+                                <i class="fas fa-calendar-plus text-info me-1"></i>
+                                <small class="text-muted">{{ phone.created_at|date:"d.m.Y H:i" }}</small>
+                            </td>
+                            
+                            <!-- Последнее обновление -->
+                            <td class="align-middle text-nowrap">
+                                <i class="fas fa-sync-alt text-warning me-1"></i>
+                                <small class="text-muted">{{ phone.updated_at|date:"d.m.Y H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="fas fa-inbox fa-2x text-muted mb-2 d-block"></i>
+                                <p class="text-muted mb-0">Нет данных за последние {{ selected_days }} дней</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if recent_phones %}
+        <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <i class="fas fa-chart-line me-1"></i> 
+                {% if selected_filter_type == 'new' %}
+                    Найдено новых: {{ recent_phones|length }}
+                {% else %}
+                    Найдено (с обновлениями): {{ recent_phones|length }}
+                {% endif %}
+            </small>
+        </div>
+        {% endif %}
+    </div>
+</div>                
             </div>
             
             <!-- Лог поисковых запросов -->
@@ -464,6 +575,164 @@ function copyPhones(elementId, buttonElement) {
         console.error('Ошибка копирования:', err);
         alert('Не удалось скопировать телефоны');
     });
+}
+
+// Функция экспорта в CSV
+function exportToCSV(tableId, filename) {
+    console.log('Exporting table:', tableId); // Для отладки
+    
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error('Table not found with id:', tableId);
+        alert('Таблица не найдена');
+        return;
+    }
+    
+    // Собираем данные из таблицы
+    const rows = [];
+    const headers = [];
+    
+    // Заголовки
+    const headerCells = table.querySelectorAll('thead th');
+    if (headerCells.length === 0) {
+        console.error('No headers found');
+        alert('Заголовки не найдены');
+        return;
+    }
+    
+    headerCells.forEach(cell => {
+        let headerText = cell.innerText.trim();
+        // Убираем иконки и лишние символы
+        //headerText = headerText.replace(/[⬆️⬇️🟰📍→🆕🔄❓]/g, '').trim();
+        // Убираем иконки Font Awesome (текст в них обычно пустой)
+        if (headerText === '') {
+            // Если текст пустой, возможно это иконка, пропускаем
+            return;
+        }
+        headers.push(headerText);
+    });
+    
+    if (headers.length === 0) {
+        // Если заголовки не найдены, используем стандартные
+        headers.push('Телефон', 'Страницы', 'Появилось', 'Обновлено');
+    }
+    rows.push(headers);
+    
+    // Данные
+    const dataRows = table.querySelectorAll('tbody tr');
+    dataRows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            let cellText = cell.innerText.trim();
+            // Убираем эмодзи и иконки
+            //cellText = cellText.replace(/[⬆️⬇️🟰📍→🆕🔄❓]/g, '').trim();
+            // Убираем множественные пробелы
+            cellText = cellText.replace(/\s+/g, ' ').trim();
+            rowData.push(cellText);
+        });
+        if (rowData.length > 0) {
+            rows.push(rowData);
+        }
+    });
+    
+    if (rows.length <= 1) {
+        alert('Нет данных для экспорта');
+        return;
+    }
+    
+    // Создаем CSV
+    const csvContent = rows.map(row => 
+        row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+    
+    // Добавляем BOM для поддержки UTF-8 в Excel
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Создаем ссылку для скачивания
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+
+// Функция экспорта в Excel (XLSX формат)
+function exportToExcel(tableId, filename) {
+    console.log('Exporting table:', tableId);
+    
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error('Table not found with id:', tableId);
+        alert('Таблица не найдена');
+        return;
+    }
+    
+    // Собираем данные из таблицы
+    const data = [];
+    
+    // Заголовки
+    const headers = [];
+    const headerCells = table.querySelectorAll('thead th');
+    headerCells.forEach(cell => {
+        let headerText = cell.innerText.trim();
+        // Убираем иконки и эмодзи
+        headerText = headerText.replace(/[⬆️⬇️🟰📍→🆕🔄❓]/g, '').trim();
+        if (headerText) {
+            headers.push(headerText);
+        }
+    });
+    
+    if (headers.length === 0) {
+        headers.push('Телефон', 'Страницы', 'Появилось', 'Обновлено');
+    }
+    data.push(headers);
+    
+    // Данные
+    const dataRows = table.querySelectorAll('tbody tr');
+    dataRows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            let cellText = cell.innerText.trim();
+            // Убираем эмодзи и иконки
+            cellText = cellText.replace(/[⬆️⬇️🟰📍→🆕🔄❓]/g, '').trim();
+            // Убираем множественные пробелы
+            cellText = cellText.replace(/\s+/g, ' ').trim();
+            rowData.push(cellText);
+        });
+        if (rowData.length > 0 && rowData.some(cell => cell !== '')) {
+            data.push(rowData);
+        }
+    });
+    
+    if (data.length <= 1) {
+        alert('Нет данных для экспорта');
+        return;
+    }
+    
+    // Создаем workbook и worksheet
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // Настраиваем ширину колонок
+    const colWidths = [
+        { wch: 20 }, // Телефон
+        { wch: 15 }, // Страницы
+        { wch: 18 }, // Появилось
+        { wch: 18 }  // Обновлено
+    ];
+    ws['!cols'] = colWidths;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Телефоны');
+    
+    // Сохраняем файл
+    const fileName = `${filename}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 }
 
 // Инициализация при загрузке

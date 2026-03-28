@@ -357,6 +357,19 @@ class CrawledPhone(models.Model):
         verbose_name="Контекст вокруг телефона",
         help_text="Контекст вокруг телефона"
     )
+    # Поля для отслеживания страниц выдачи
+    first_seen_page = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Страница первого обнаружения",
+        help_text="Номер страницы поисковой выдачи, где телефон был найден впервые"
+    )
+    last_seen_page = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Страница последнего обнаружения",
+        help_text="Номер страницы поисковой выдачи, где телефон был найден последний раз"
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Дата создания",
@@ -387,6 +400,31 @@ class CrawledPhone(models.Model):
     
     def __str__(self):
         return self.phone
+    
+    def get_page_movement(self):
+        """
+        Возвращает информацию о движении телефона по страницам.
+        """
+        if self.first_seen_page and self.last_seen_page:
+            if self.first_seen_page < self.last_seen_page:
+                return {
+                    'direction': 'down',
+                    'text': f'Переместился со страницы {self.first_seen_page} на {self.last_seen_page} (ниже)',
+                    'icon': '⬇️'
+                }
+            elif self.first_seen_page > self.last_seen_page:
+                return {
+                    'direction': 'up',
+                    'text': f'Переместился со страницы {self.first_seen_page} на {self.last_seen_page} (выше)',
+                    'icon': '⬆️'
+                }
+            else:
+                return {
+                    'direction': 'same',
+                    'text': f'Остаётся на странице {self.first_seen_page}',
+                    'icon': '➡️'
+                }
+        return None
 
 
 class CrawledEmail(models.Model):

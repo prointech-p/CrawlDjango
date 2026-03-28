@@ -98,22 +98,53 @@ def cleanup_old_data(days: int = None) -> Dict[str, int]:
 
 def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=None) -> Tuple[bool, CrawledPhone]:
     """
-    Создаёт или обновляет телефон, обновляя updated_at при наличии.
+    Создаёт или обновляет телефон, обновляя страницы выдачи.
+    
+    При создании: first_seen_page и last_seen_page = текущая страница
+    При обновлении: обновляется last_seen_page, first_seen_page остаётся неизменной
+    
+    Аргументы:
+        topic: тема поиска
+        crawled_data: объект CrawledData
+        phone: номер телефона
+        phone_raw: исходный текст (опционально)
+        context: контекст (опционально)
     
     Возвращает:
-        (is_new, phone_object) - is_new=True если создан новый, False если обновлён существующий
+        (is_new, phone_object)
     """
-    phone_obj, created = CrawledPhone.objects.update_or_create(
-        topic=topic,
-        phone=phone,
-        defaults={
-            'crawled_data': crawled_data,
-            'phone_raw': phone_raw or phone,
-            'context': context,
-            'updated_at': timezone.now()  # auto_now=True сработает автоматически
-        }
-    )
+    page_number = None
+    if crawled_data and crawled_data.search_result:
+        page_number = crawled_data.search_result.page
+    
+    # Пытаемся найти существующий телефон
+    try:
+        phone_obj = CrawledPhone.objects.get(topic=topic, phone=phone)
+        created = False
+        
+        # Обновляем существующую запись
+        phone_obj.crawled_data = crawled_data
+        phone_obj.phone_raw = phone_raw or phone
+        phone_obj.context = context
+        phone_obj.last_seen_page = page_number
+        # first_seen_page НЕ трогаем
+        phone_obj.save(update_fields=['crawled_data', 'phone_raw', 'context', 'last_seen_page', 'updated_at'])
+        
+    except CrawledPhone.DoesNotExist:
+        # Создаём новую запись
+        phone_obj = CrawledPhone.objects.create(
+            topic=topic,
+            crawled_data=crawled_data,
+            phone=phone,
+            phone_raw=phone_raw or phone,
+            context=context,
+            first_seen_page=page_number,
+            last_seen_page=page_number
+        )
+        created = True
+    
     return created, phone_obj
+
 
 
 def update_or_create_email(topic, crawled_data, email, context=None) -> Tuple[bool, CrawledEmail]:

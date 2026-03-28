@@ -223,6 +223,11 @@
     color: #2c3e50;
 }
 
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    color: white !important;
+}
+
 /* Прогресс-бары */
 .progress-custom {
     height: 8px;
@@ -446,8 +451,14 @@
 }
 
 /* Стили для скроллбара в списках */
+/* Стили для таблицы телефонов */
+.table-responsive {
+    scrollbar-width: thin;
+}
+
 .table-responsive::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
@@ -463,3 +474,49 @@
 .table-responsive::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+.phone-row {
+    transition: background-color 0.2s ease;
+}
+
+.phone-row:hover {
+    background-color: #f8f9fa;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Badges для страниц */
+.badge.bg-opacity-10 {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+.badge.bg-warning.bg-opacity-10 {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.badge.bg-success.bg-opacity-10 {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+/* Телефонный номер */
+.phone-number {
+    font-family: 'Courier New', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* Компактная таблица */
+.table-sm td, .table-sm th {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.table-light {
+    background-color: #f8f9fa;
+}
+
