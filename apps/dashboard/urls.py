@@ -9,4 +9,5 @@ urlpatterns = [
     path('', login_required(views.IndexView.as_view()), name='index'),
     path('topics/', login_required(views.TopicListView.as_view()), name='topic_list'),
     path('topics/<int:pk>/', login_required(views.TopicDetailView.as_view()), name='topic_detail'),
+    path('ajax/phone-history/', views.PhoneHistoryAjaxView.as_view(), name='phone_history_ajax'),
 ]

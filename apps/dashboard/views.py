@@ -5,7 +5,16 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
-from apps.core.models import SearchTopic, SearchHistory, SearchResult, CrawledPhone, CrawledData
+
+from django.http import JsonResponse
+from django.views import View
+from django.utils.dateparse import parse_date
+
+from apps.core.models import (
+    SearchTopic, SearchHistory, SearchResult, 
+    CrawledPhone, CrawledPhoneHistory,
+    CrawledData
+)
 
 
 class IndexView(LoginRequiredMixin, TemplateView):
@@ -308,3 +317,36 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
         context['days_range'] = range(1, 8)
         
         return context
+    
+
+class PhoneHistoryAjaxView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        topic_id = request.GET.get('topic_id')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        page = request.GET.get('page')
+
+        qs = CrawledPhoneHistory.objects.filter(topic_id=topic_id)
+
+        if date_from:
+            qs = qs.filter(search_date__gte=parse_date(date_from))
+
+        if date_to:
+            qs = qs.filter(search_date__lte=parse_date(date_to))
+
+        if page:
+            qs = qs.filter(page=page)
+
+        qs = qs.order_by('-search_date')[:500]
+
+        data = [
+            {
+                "phone": obj.phone,
+                "page": obj.page,
+                "position": obj.position,
+                "search_date": obj.search_date.strftime('%d.%m.%Y'),
+            }
+            for obj in qs
+        ]
+
+        return JsonResponse({"results": data})

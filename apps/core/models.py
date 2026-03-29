@@ -427,6 +427,72 @@ class CrawledPhone(models.Model):
         return None
 
 
+class CrawledPhoneHistory(models.Model):
+    """
+    Модель истории появлений телефонных номеров в поисковой выдаче.
+    Фиксирует каждый случай обнаружения телефона на определённой странице в конкретную дату.
+    """
+    topic = models.ForeignKey(
+        SearchTopic,
+        on_delete=models.CASCADE,
+        related_name='phone_history',
+        verbose_name="Тема поиска",
+        help_text="Тема поиска, в рамках которой найден телефон"
+    )
+    phone = models.CharField(
+        max_length=20,
+        verbose_name="Номер телефона",
+        help_text="Номер телефона в формате +7XXXXXXXXXX"
+    )
+    page = models.IntegerField(
+        verbose_name="Страница обнаружения",
+        help_text="Номер страницы поисковой выдачи (1, 2, 3...)"
+    )
+    position = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Позиция на странице",
+        help_text="Позиция телефона на странице выдачи (опционально)"
+    )
+    search_date = models.DateField(
+        verbose_name="Дата выдачи",
+        help_text="Дата, когда был выполнен поиск"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата создания записи",
+        help_text="Дата создания записи в БД"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последнего обновления",
+        help_text="Дата последнего обновления записи"
+    )
+    
+    class Meta:
+        db_table = 'crawled_phone_history'
+        verbose_name = 'История появления телефона'
+        verbose_name_plural = 'История появлений телефонов в поисковой выдаче'
+        ordering = ['-search_date', 'topic', 'phone', 'page']
+        indexes = [
+            models.Index(fields=['topic', 'phone']),
+            models.Index(fields=['search_date']),
+            models.Index(fields=['topic', 'search_date']),
+            models.Index(fields=['phone', 'search_date']),
+            models.Index(fields=['topic', 'page', 'search_date']),
+        ]
+        # Уникальность: телефон + тема + дата выдачи + страница
+        constraints = [
+            models.UniqueConstraint(
+                fields=['topic', 'phone', 'search_date', 'page'],
+                name='unique_phone_history_per_search'
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.phone} - {self.topic.name} - {self.search_date.strftime('%d.%m.%Y')} - стр.{self.page}"
+    
+
 class CrawledEmail(models.Model):
     """
     Модель найденных email адресов.

@@ -6,7 +6,9 @@ from django.urls import reverse
 from django.db.models import Count, Q
 from .models import (
     SearchTopic, SearchHistory, SearchResult, UrlExclusion,
-    CrawledData, CrawledPhone, CrawledEmail, CrawledAddress
+    CrawledData, 
+    CrawledPhone, CrawledPhoneHistory,
+    CrawledEmail, CrawledAddress
 )
 
 admin.site.site_header = 'Парсер Яндекса | Администрирование'
@@ -626,6 +628,78 @@ class CrawledPhoneAdmin(admin.ModelAdmin):
         return obj.created_at.strftime('%d.%m.%Y %H:%M')
     created_at_short.short_description = 'Найден'
 
+
+@admin.register(CrawledPhoneHistory)
+class CrawledPhoneHistoryAdmin(admin.ModelAdmin):
+    """Админка для найденных телефонов"""
+
+    list_display = [
+        'phone', 
+        'topic_link', 
+        'page', 
+        'search_date_display', 
+        'position', 
+        'created_at'
+    ]
+    list_filter = ['topic', 'page', 'search_date']
+    search_fields = ['phone', 'topic__name']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'search_date'
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('topic', 'phone', 'page', 'position')
+        }),
+        ('Даты', {
+            'fields': ('search_date', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def topic_link(self, obj):
+        """Ссылка на тему поиска в админке"""
+        url = reverse('admin:core_searchtopic_change', args=[obj.topic.id])
+        return format_html('<a href="{}">{}</a>', url, obj.topic.name)
+    topic_link.short_description = 'Тема поиска'
+    topic_link.admin_order_field = 'topic__name'
+    
+    def search_date_display(self, obj):
+        """Форматированная дата выдачи"""
+        return obj.search_date.strftime('%d.%m.%Y %H:%M:%S')
+    search_date_display.short_description = 'Дата выдачи'
+    search_date_display.admin_order_field = 'search_date'
+    
+    actions = ['export_selected_to_csv']
+    
+    def export_selected_to_csv(self, request, queryset):
+        """Экспорт выбранных записей в CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="phone_history.csv"'
+        response.write('\ufeff')  # BOM для UTF-8
+        
+        writer = csv.writer(response)
+        writer.writerow(['Телефон', 'Тема', 'Страница', 'Позиция', 'Дата выдачи', 'Дата создания'])
+        
+        for obj in queryset:
+            writer.writerow([
+                obj.phone,
+                obj.topic.name,
+                obj.page,
+                obj.position or '',
+                obj.search_date.strftime('%d.%m.%Y %H:%M:%S'),
+                obj.created_at.strftime('%d.%m.%Y %H:%M:%S')
+            ])
+        
+        return response
+    export_selected_to_csv.short_description = 'Экспортировать выбранные записи в CSV'
+    
+    def get_queryset(self, request):
+        """Оптимизация запросов"""
+        return super().get_queryset(request).select_related('topic')
+    
 
 @admin.register(CrawledEmail)
 class CrawledEmailAdmin(admin.ModelAdmin):

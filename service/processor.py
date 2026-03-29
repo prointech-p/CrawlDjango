@@ -4,19 +4,25 @@
 Адаптировано для Django ORM.
 """
 
+
+from datetime import datetime
+
 from decouple import config
 
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 from typing import Optional, List, Dict, Any, Tuple
-import logging
 from urllib.parse import urlparse
+
+import logging
 
 # Импортируем Django модели
 from apps.core.models import (
     SearchTopic, SearchHistory, SearchResult, CrawledData,
-    CrawledPhone, CrawledEmail, CrawledAddress, UrlExclusion
+    CrawledPhone, CrawledPhoneHistory,
+    CrawledEmail, CrawledAddress, UrlExclusion
 )
 
 # Импортируем внешние модули 
@@ -98,10 +104,11 @@ def cleanup_old_data(days: int = None) -> Dict[str, int]:
 
 def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=None) -> Tuple[bool, CrawledPhone]:
     """
-    Создаёт или обновляет телефон, обновляя страницы выдачи.
+    Создаёт или обновляет телефон, обновляя страницы выдачи и записывая историю.
     
     При создании: first_seen_page и last_seen_page = текущая страница
     При обновлении: обновляется last_seen_page, first_seen_page остаётся неизменной
+    Также добавляет запись в CrawledPhoneHistory, если её ещё нет для этой даты
     
     Аргументы:
         topic: тема поиска
@@ -114,8 +121,18 @@ def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=N
         (is_new, phone_object)
     """
     page_number = None
+    position = None
+    search_datetime = None
+    
     if crawled_data and crawled_data.search_result:
         page_number = crawled_data.search_result.page
+        position = crawled_data.search_result.position
+        search_datetime = crawled_data.search_result.history.search_datetime
+    
+    # Получаем дату без времени для поиска в истории
+    search_date = None
+    if search_datetime:
+        search_date = search_datetime.date()
     
     # Пытаемся найти существующий телефон
     try:
@@ -142,6 +159,24 @@ def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=N
             last_seen_page=page_number
         )
         created = True
+    
+    # Сохраняем историю появления телефона в выдаче
+    if search_date and page_number is not None:
+        try:
+            # Проверяем, есть ли уже запись за эту дату
+            history_obj = CrawledPhoneHistory.objects.get(
+                topic=topic,
+                phone=phone,
+                search_date=search_date,
+            )
+        except CrawledPhoneHistory.DoesNotExist:
+            history_obj = CrawledPhoneHistory.objects.create(
+                topic=topic,
+                phone=phone,
+                search_date=search_date,
+                page=page_number,
+                position=position
+            )
     
     return created, phone_obj
 
