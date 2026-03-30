@@ -345,6 +345,8 @@ class PhoneHistoryAjaxView(LoginRequiredMixin, View):
                 "page": obj.page,
                 "position": obj.position,
                 "search_date": obj.search_date.strftime('%d.%m.%Y'),
+                "url": obj.url,
+                "updated_at": timezone.localtime(obj.updated_at).strftime('%d.%m.%Y %H:%M'),
             }
             for obj in qs
         ]

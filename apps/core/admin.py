@@ -566,17 +566,26 @@ class CrawledPhoneAdmin(admin.ModelAdmin):
         'topic',
         'site_url', 
         'crawled_link', 
+        'first_seen_page',
+        'last_seen_page',
         'phone_raw_short', 
         'created_at_short'
     ]
     list_display_links = ['id', 'phone']
-    list_filter = ['topic', 'created_at']
+    list_filter = ['topic', 'last_seen_page', 'created_at']
     search_fields = ['topic', 'phone', 'phone_raw']
     readonly_fields = ['topic', 'created_at']
     
     fieldsets = (
         (None, {
-            'fields': ('crawled_data', 'phone', 'phone_raw', 'context')
+            'fields': (
+                'crawled_data', 
+                'phone', 
+                'phone_raw', 
+                'context',
+                'first_seen_page',
+                'last_seen_page',
+            )
         }),
         ('Системная информация', {
             'fields': ('created_at',),
@@ -639,6 +648,7 @@ class CrawledPhoneHistoryAdmin(admin.ModelAdmin):
         'page', 
         'search_date_display', 
         'position', 
+        'url',
         'created_at'
     ]
     list_filter = ['topic', 'page', 'search_date']

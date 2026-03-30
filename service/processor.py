@@ -123,11 +123,13 @@ def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=N
     page_number = None
     position = None
     search_datetime = None
+    url = None
     
     if crawled_data and crawled_data.search_result:
         page_number = crawled_data.search_result.page
         position = crawled_data.search_result.position
         search_datetime = crawled_data.search_result.history.search_datetime
+        url = crawled_data.url
     
     # Получаем дату без времени для поиска в истории
     search_date = None
@@ -169,13 +171,19 @@ def update_or_create_phone(topic, crawled_data, phone, phone_raw=None, context=N
                 phone=phone,
                 search_date=search_date,
             )
+            # Обновляем существующую запись
+            history_obj.position = position
+            history_obj.url = url
+            history_obj.page = page_number
+            history_obj.save(update_fields=['page', 'position', 'url', 'updated_at'])
         except CrawledPhoneHistory.DoesNotExist:
             history_obj = CrawledPhoneHistory.objects.create(
                 topic=topic,
                 phone=phone,
                 search_date=search_date,
                 page=page_number,
-                position=position
+                position=position,
+                url=url
             )
     
     return created, phone_obj

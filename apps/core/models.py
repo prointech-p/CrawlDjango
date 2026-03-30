@@ -454,6 +454,12 @@ class CrawledPhoneHistory(models.Model):
         verbose_name="Позиция на странице",
         help_text="Позиция телефона на странице выдачи (опционально)"
     )
+    url = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="URL страницы",
+        help_text="URL страницы"
+    )
     search_date = models.DateField(
         verbose_name="Дата выдачи",
         help_text="Дата, когда был выполнен поиск"
